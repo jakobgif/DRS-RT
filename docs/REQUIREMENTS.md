@@ -113,6 +113,8 @@ The high network load scenario (T-3) shall be achieved by running a second insta
 
 ## Test Scenarios
 
+See @TESTING.md for the full test specification (unit, integration, and system tests).
+
 ### T-1 — Baseline (50,000 cycles)
 Normal operation. Establishes the baseline RTT distribution.
 
