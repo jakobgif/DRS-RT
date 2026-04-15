@@ -1,3 +1,5 @@
+[![Build Report PDF](https://github.com/jakobgif/DRS-RT/actions/workflows/build-report.yml/badge.svg)](https://github.com/jakobgif/DRS-RT/actions/workflows/build-report.yml)
+
 # Distributed Real-Time System (DRS) Round-Trip Measurement
 
 UDP-based round-trip time (RTT) and latency jitter measurement between two hardware nodes (e.g., Raspberry Pis), written in Rust.
