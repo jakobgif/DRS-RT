@@ -121,7 +121,7 @@ Weiters bestätige ich, dass ich die vorliegende Arbeit bis dato nicht veröffen
 		// --- LOGO ------------------------------------------------------------
 		#place(top + left, dx: 0cm, dy: 0cm)[
 			#box(clip:false, stroke: 4pt + white)[
-				#image("logo.svg", width: 20%)
+				#image("sections/images/logo.svg", width: 20%)
 			]
 		]
 		// --- WEB LINK @RIGHT BOTTOM ------------------------------------------
