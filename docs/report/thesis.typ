@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------------
 // THESIS TEMPLATE FOR UAS TECHNIKUM WIEN
 // Author: M. Horauer
 // GITHUB: https://github.com/mhorauer/
@@ -8,57 +8,35 @@
 #import "uastw-thesis-lib.typ": *
 
 // -----------------------------------------------------------------------------
-// ---[ ToDo ]------------------------------------------------------------------
-// Adjust the variables below ...
+// ---[ Adjust the variables below ]--------------------------------------------
 
 //#let lan = "de"
 #let lan = "en"
-//#let deg = "Bachelor"
-#let deg = "Master"
-#let std = "Embedded Systems"
-//#let std = "Information- and Communication Systems"
 
-#let title = "Title of your Thesis"
-#let subTitle = "This is a longer sub-title"
+#let title    = "UDP Round-Trip Latency Measurement"
+#let subTitle = ""
 
-#let authorName = "Ing. Max Mustermann, BSc"
-#let authorID = "0123456789"
+#let authors = (
+  (name: "Jakob-Elias Frenzel", id: "es24m016"),
+  (name: "Bernhard Bauer", id: "es24m013"),
+)
 
-#let adv1 = "Prof(FH) Dipl.-Ing. Dr. Knowitall"
-#let adv2 = "Wunder Wuzzi, MSc."
-#let loc = "Wien"
+#let course = "Distributed Embedded Systems"
+#let loc    = "Wien"
 
-// -----------------------------------------------------------------------------
-// ---[ DO NOT TOUCH ]----------------------------------------------------------
-#let thesisType = ""
-#{
-  if lan == "de" {
-	if deg == "Bachelor" {
-		thesisType = "BACHELORARBEIT"
-	} else {
-		thesisType = "MASTERARBEIT"
-	}
- } else {
-	if deg == "Bachelor" {
-		thesisType = "BACHELOR PAPER"
-	} else {
-		thesisType = "MASTER THESIS"
-	}
- }
-}
 // --- OUTPUT THE TITLEPAGE ----------------------------------------------------
 #set page(numbering: none)
 #show: uastw-thesis-titlepage.with(
 	language: lan,
-    thesis-type: thesisType,
-    degree: deg,
-    study-program: std,
+    thesis-type: "LAB REPORT",
+    degree: "",
+    study-program: "",
     thesis-title: title,
     thesis-subtitle: subTitle,
-    author: authorName,
-    authorid: authorID,
-    advisor1: adv1,
-    advisor2: adv2,
+    author: authors.map(a => a.name).join(", "),
+    authorid: authors.map(a => a.id).join(", "),
+    advisor1: course,
+    advisor2: "",
     location: loc)
 
 // --- SETUP THE PAGE STYLING & SOME VARIABLES ---------------------------------
@@ -67,25 +45,12 @@
 #show "BibTeX": bibtex
 #show "Rust": rust
 
-// --- OUTPUT THE PAGE OF DECLARATION ------------------------------------------
-#show: declaration.with(
-	language: lan)
-
 // --- WE START WITH PAGE NUMBERING @KURZFASSUNG -------------------------------
 #set page(footer: context [
 	#set text(twgray, size: 10pt)
 	#align(right, counter(page).display("1"))
 	])
 #set page(numbering: "1")
-
-// --- INSERT KURZFASSUNG ------------------------------------------------------
-#include "sections/01_kurzfassung.typ"
-
-// --- INSERT ABSTRACT ---------------------------------------------------------
-#include "sections/02_abstract.typ"
-
-// --- INSERT ACHNOWLEDGMENT ---------------------------------------------------
-#include "sections/03_acknowledgement.typ"
 
 // --- INSERT TABLE OF CONTENTS ------------------------------------------------
 #outline(

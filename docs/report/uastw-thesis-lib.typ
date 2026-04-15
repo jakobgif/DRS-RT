@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------------
 // SETUP & FUNCTIONS FOR UAS TECHNIKUM WIEN THESIS TEMPLATE
 // Author: M. Horauer
 // GITHUB: https://github.com/mhorauer/
@@ -137,23 +137,6 @@ Weiters bestätige ich, dass ich die vorliegende Arbeit bis dato nicht veröffen
 				#thesis-type
 			]	
 		]
-		// --- TEXT ABOUT THE DEGREE & STUDY PROGRAM ---------------------------
-		#place(top + left, dx: 1.2cm, dy: 5.8cm)[
-			#text(font: "Open Sans", 16pt)[
-				#set par(leading: 1em)
-				#if language == "en" [
-					Thesis submitted in fulfillment of the requirements for the \
-					degree of #degree of Science in Engineering at the University of\  
-					Applied Sciences Technikum Wien - Degree Program \
-					#study-program
-				] else [
-					zur Erlangung des akademischen Grades \
-					„#degree of Science in Engineering“ im Studiengang \
-					#study-program
-				]
-			]			
-		]
-		// --- THESIS TITLE & SUBTITLE -----------------------------------------
 		#place(top + left, dx: 1.2cm, dy: 10.8cm)[
 			#text(font: "Open Sans", 22pt, weight: "bold")[
 				#thesis-title
@@ -172,20 +155,20 @@ Weiters bestätige ich, dass ich die vorliegende Arbeit bis dato nicht veröffen
 					By: #author \
 					Student Number: #authorid \ #v(1.5em)
 					#if advisor2 == "" [
-						Supervisor: #advisor1 \ #v(1.5em)
+						Course: #advisor1 \ #v(1.5em)
 					] else [
-						Supervisor 1: #advisor1 \ 
-						Supervisor 2: #advisor2 \ #v(1.5em)					
+						Course: #advisor1 \ 
+						Course: #advisor2 \ #v(1.5em)					
 					]
 					#location, #datetime.today().display()
 				] else [
 					Ausgeführt von: #author \
 					Personenkennzeichen: #authorid \ #v(1.5em)
 					#if advisor2 == "" [
-						BegutachterIn: #advisor1 \ #v(1.5em)
+						Lehrveranstaltung: #advisor1 \ #v(1.5em)
 					] else [
-						BegutachterIn 1: #advisor1 \ 
-						BegutachterIn 2: #advisor2 \ #v(1.5em)					
+						Lehrveranstaltung: #advisor1 \ 
+						Lehrveranstaltung: #advisor2 \ #v(1.5em)					
 					]
 					#location, #datetime.today().display()
 				]
