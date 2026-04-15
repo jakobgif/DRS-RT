@@ -59,7 +59,7 @@ After all cycles complete, the Master shall write all samples to a **CSV file** 
 The implementation shall be written in **Rust** using only safe code where possible.
 
 #### NF-2 — Timing accuracy
-The timing mechanism shall not be affected by wall-clock adjustments and shall provide sufficient resolution for microsecond-level measurements.
+Timing shall use `std::time::Instant`, which maps to `CLOCK_MONOTONIC` (via vDSO, no syscall) on Linux and `QueryPerformanceCounter` on Windows. Both are monotonic and immune to wall-clock adjustments. On the Raspberry Pi 4, the underlying ARM System Counter runs at 19.2 MHz (~52 ns resolution), which is sufficient for microsecond-level RTT measurements. The `Instant::now()` call shall appear only at send and receive — never inside any other hot-path logic.
 
 #### NF-3 — No artificial delays
 The system shall not introduce artificial delays (e.g., `sleep`) between cycles unless explicitly required.
