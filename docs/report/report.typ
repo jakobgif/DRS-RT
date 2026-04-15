@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------------
 
 #import "uastw-thesis-lib.typ": *
+#import "@preview/cmarker:0.1.1": render
 
 // -----------------------------------------------------------------------------
 // ---[ Adjust the variables below ]--------------------------------------------
@@ -43,7 +44,7 @@
 #show: uastw-thesis-page-setup
 #show "LaTeX": latex
 #show "BibTeX": bibtex
-#show "Rust": rust
+// #show "Rust": rust
 
 // --- WE START WITH PAGE NUMBERING @KURZFASSUNG -------------------------------
 #set page(footer: context [
@@ -64,19 +65,22 @@
 // --[ ADJUST YOUR CONTENT FILES BY ADDING/MODIFYING SECTIONS ]-----------------
 //
 #include "sections/10_section1.typ"
-#include "sections/11_section2.typ"
-//
+// #include "sections/11_section2.typ"
 // #include "sections//12_section3.typ"
 // ...
 
+#render(read("../REQUIREMENTS.md"))
+#render(read("../TESTING.md"))
+#render(read("../DEVELOPMENT.md"))
+
 // -----------------------------------------------------------------------------
 // ---[ BIBLIOGRAPHY ]----------------------------------------------------------
-#bibliography(
-	title: if lan == "en" [Bibliography] else [Literaturverzeichnis],
-	"sections/90_works.bib"
-)
+// #bibliography(
+// 	title: if lan == "en" [Bibliography] else [Literaturverzeichnis],
+// 	"sections/90_works.bib"
+// )
 // -----------------------------------------------------------------------------
 // --[ INDEX ]------------------------------------------------------------------
-#include "sections/99_index.typ"
+// #include "sections/99_index.typ"
 
 // EOF
