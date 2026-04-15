@@ -18,6 +18,8 @@ This project measures round-trip latency. **Performance is the top priority.** E
 
 When implementing any feature, always reference the requirement number(s) being targeted (e.g., F-1, NF-4, T-2) in code comments, commit messages, and responses.
 
+When writing Rust, prefer established, well-documented crates over hand-rolled solutions where it makes sense. Do not reinvent the wheel. Examples: use `clap` for CLI parsing, `log`/`env_logger` for logging. Only reach for a crate if it is widely used and actively maintained.
+
 # Workflow
 
 Use subagents for isolated or verbose tasks (codebase exploration, log analysis, research) to keep the main session context lean. Subagents run in their own context window and return only a summary — preventing large tool outputs from polluting the main conversation. Chain them from the main session; subagents cannot spawn other subagents.
