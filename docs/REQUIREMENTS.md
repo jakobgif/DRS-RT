@@ -151,3 +151,29 @@ F-12 requires lost packets to be logged, but F-10 and NF-5 prohibit any I/O insi
 
 ### Q-7 â€” Packet payload and sequence verification
 Q-2 and Q-3 are coupled: if the payload is fixed-size padding only, sequence number verification (Q-3) is not possible. If a sequence number is embedded in the payload, stale or reordered echo replies can be detected. Which approach is required?
+
+---
+
+# AI ASSISTANT ANALYSIS & PROPOSED UPDATES
+
+## Answers to Open Questions
+
+*   **Q-1 (Packet loss timeout):** **Recommendation:** Make this a configurable CLI argument (--timeout) with a default of **100ms** for real-time responsiveness.
+*   **Q-2 & Q-3 & Q-7 (Payload & Verification):** **Recommendation:** Use a **u64 sequence number** embedded in the payload. This is essential for detecting stale packets and correctly marking lost packets.
+*   **Q-4 (CSV timestamp):** **Recommendation:** Yes. Include a **relative timestamp** (microseconds since start) for each sample. This allows for time-series analysis and correlation with system events (CPU spikes, etc.).
+*   **Q-5 (Inter-cycle pacing):** **Recommendation:** Default to 'as fast as possible' to find system limits, but consider a --delay argument for controlled testing.
+*   **Q-6 (Packet loss logging):** **Recommendation:** Record lost packets in the in-memory buffer using a sentinel value (e.g., -1 or 0). These should be written to the CSV as 'LOST' or a specific value so the timeline remains consistent.
+
+## Potential Missing Requirements
+
+1.  **M-1 — Configurable Payload Size:** RTT varies significantly with packet size. A CLI argument (e.g., --size) should be added to control the amount of padding added after the sequence number.
+2.  **M-2 — Warm-up Cycles:** To avoid 'cold start' noise (ARP, cache misses), the Master should perform a configurable number of non-recorded warm-up cycles (e.g., default 10).
+3.  **M-3 — Signal Handling (Partial Data Preservation):** If the user stops the Master with Ctrl+C, the binary should gracefully exit the loop and write the *currently collected* buffer to the CSV before terminating.
+4.  **M-4 — Buffer Overflow Protection:** The binary should check available system memory against the requested cycle count * sample size before allocation to prevent OOM crashes.
+5.  **M-5 — CPU Affinity (Real-Time):** For higher precision on the Raspberry Pi, an optional argument to pin the measurement thread to a specific CPU core (e.g., --cpu-pin 3) would reduce scheduling jitter.
+
+## Observations
+
+1.  **Consistency Error (TESTING.md vs REQUIREMENTS.md):** TESTING.md (IT-5) suggests only successful samples are in the CSV, but for jitter analysis, knowing where gaps (lost packets) occurred is vital. I recommend the CSV always has cycle count rows.
+2.  **Jitter Definition:** While 'Jitter' is in the project title, no specific formula is requested. I recommend implementing the **Standard Deviation of RTT** and **Peak-to-Peak Jitter** in the Python analysis script.
+3.  **Clock Resolution:** While std::time::Instant is monotonic, its precision on various OS/Hardware combinations should be verified during the first run and logged.
