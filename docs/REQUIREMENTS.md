@@ -166,11 +166,11 @@ Q-2 and Q-3 are coupled: if the payload is fixed-size padding only, sequence num
 
 ## Potential Missing Requirements
 
-1.  **M-1 — Configurable Payload Size:** RTT varies significantly with packet size. A CLI argument (e.g., --size) should be added to control the amount of padding added after the sequence number.
-2.  **M-2 — Warm-up Cycles:** To avoid 'cold start' noise (ARP, cache misses), the Master should perform a configurable number of non-recorded warm-up cycles (e.g., default 10).
-3.  **M-3 — Signal Handling (Partial Data Preservation):** If the user stops the Master with Ctrl+C, the binary should gracefully exit the loop and write the *currently collected* buffer to the CSV before terminating.
-4.  **M-4 — Buffer Overflow Protection:** The binary should check available system memory against the requested cycle count * sample size before allocation to prevent OOM crashes.
-5.  **M-5 — CPU Affinity (Real-Time):** For higher precision on the Raspberry Pi, an optional argument to pin the measurement thread to a specific CPU core (e.g., --cpu-pin 3) would reduce scheduling jitter.
+1.  **M-1 - Configurable Payload Size:** RTT varies significantly with packet size. A CLI argument (e.g., --size) should be added to control the amount of padding added after the sequence number.
+2.  **M-2 - Warm-up Cycles:** To avoid 'cold start' noise (ARP, cache misses), the Master should perform a configurable number of non-recorded warm-up cycles (e.g., default 10).
+3.  **M-3 - Signal Handling (Partial Data Preservation):** If the user stops the Master with Ctrl+C, the binary should gracefully exit the loop and write the *currently collected* buffer to the CSV before terminating.
+4.  **M-4 - Buffer Overflow Protection:** The binary should check available system memory against the requested cycle count * sample size before allocation to prevent OOM crashes.
+5.  **M-5 - CPU Affinity (Real-Time):** For higher precision on the Raspberry Pi, an optional argument to pin the measurement thread to a specific CPU core (e.g., --cpu-pin 3) would reduce scheduling jitter.
 
 ## Observations
 
