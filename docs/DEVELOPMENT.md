@@ -41,12 +41,6 @@ After the build completes:
 
 ---
 
-## Cross-Compilation (WSL2)
-
-Cross-compilation is done inside WSL2 using the `aarch64-unknown-linux-gnu` target and a GCC cross-linker. The linker is configured in `.cargo/config.toml`.
-
----
-
 ## GitHub Actions
 
 The CI pipeline consists of a single build job running on a GitHub runner:
