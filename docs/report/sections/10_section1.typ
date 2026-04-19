@@ -25,6 +25,20 @@ The Master uses `std::time::Instant` for timestamping, which maps to a monotonic
 
 A Python script consumes the CSV output produced by the Master. It computes the minimum, mean, and maximum RTT across all samples and generates a histogram with a logarithmic Y-axis so that rare worst-case tail latencies remain visible and are never obscured.
 
+== AI Tool Usage
+
+Claude Code (claude-sonnet-4-6, claude-haiku-4-5) was used throughout development for code generation, requirement analysis, and report writing. Token consumption was tracked using `ccusage` and is summarized below:
+
+#table(
+  columns: (auto, auto, auto, auto, auto, auto, auto),
+  align: (left, right, right, right, right, right, right),
+  table.header([*Date*], [*Input*], [*Output*], [*Cache Create*], [*Cache Read*], [*Total Tokens*], [*Cost (USD)*]),
+  [2026-04-14], [314],   [40,164],  [200,860], [6,084,467],  [6,325,805],  [\$3.08],
+  [2026-04-15], [836],   [62,813],  [399,139], [9,465,183],  [9,927,971],  [\$5.09],
+  [2026-04-19], [20],    [2,745],   [43,127],  [265,882],    [311,774],    [\$0.28],
+  [*Total*],    [*1,170*],[*105,722*],[*643,126*],[*15,815,532*],[*16,565,550*],[*\$8.45*],
+)
+
 == Test Scenarios
 
 Four test scenarios are defined to characterize the system under different load conditions:
