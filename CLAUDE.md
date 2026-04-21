@@ -28,7 +28,7 @@ For difficult or multi-step tasks, always create a plan before starting. Number 
 
 # Git Style
 
-Commit one file at a time (or one tightly related file group). Never bundle unrelated files into a single commit. Keep commit messages short and focused — one change, one message. Do not create long commit message chains.
+Commit proactively after each plan phase is complete, tested, and confirmed working — do not wait to be asked. Follow the git style: one file (or tightly related file group) per commit. Never bundle unrelated files into a single commit. Keep commit messages short and focused — one change, one message. Do not create long commit message chains.
 
 Do not touch already-committed code unless the task requires it. No reformatting, no comment tweaks, no whitespace cleanup as a side effect. Before committing, review the full diff and remove any unintended changes.
 
