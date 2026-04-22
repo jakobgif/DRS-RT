@@ -62,6 +62,12 @@ On receive, the Master shall verify that the sequence number in the reply matche
 #### F-17 — Relative timestamp in CSV
 Each row in the CSV file shall include a **relative timestamp** (microseconds elapsed since the start of the measurement loop) alongside the RTT value. This enables time-series analysis and correlation of RTT spikes with system events.
 
+#### F-18 — Warm-up cycles
+Before the measurement loop begins, the Master shall perform a configurable number of unrecorded send/receive cycles (`--warmup <count>`, default **10**). These cycles are not included in the RTT buffer or CSV output. Their purpose is to prime the ARP table and CPU caches to eliminate cold-start noise from the measurement.
+
+#### F-19 — CPU affinity
+The Master shall support an optional argument (`--cpu-pin <core>`) to pin the measurement thread to a specific CPU core. When specified, the thread shall be bound to that core for the duration of the measurement loop to reduce scheduling jitter. If not specified, no affinity is set.
+
 ### Non-Functional Requirements
 
 #### NF-1 — Language
@@ -74,7 +80,7 @@ Timing shall use `std::time::Instant`, which maps to `CLOCK_MONOTONIC` (via vDSO
 The system shall not introduce artificial delays (e.g., `sleep`) between cycles unless explicitly required.
 
 #### NF-4 — Pre-allocated buffer
-Memory allocation for the RTT buffer shall be done **before** the measurement loop begins to avoid allocation jitter during measurement.
+Memory allocation for the RTT buffer shall be done **before** the measurement loop begins to avoid allocation jitter during measurement. If the allocation fails (e.g., insufficient memory for the requested cycle count), the binary shall exit with a clear error message before any measurement begins.
 
 #### NF-5 — Hot path discipline
 No dynamic memory allocation, file I/O, console output, or other high-latency operations shall occur inside the measurement loop. If an operation could add latency, it must be moved outside the loop or eliminated.
@@ -135,21 +141,3 @@ A second instance of the ping-pong program runs on a different port concurrently
 
 ### T-4 — Long-term observation (500,000 cycles)
 Normal operation over an extended run. Used to capture rare worst-case tail latencies.
-
----
-
-# AI ASSISTANT ANALYSIS & PROPOSED UPDATES
-
-## Potential Missing Requirements
-
-1.  **M-1 - Configurable Payload Size:** RTT varies significantly with packet size. A CLI argument (e.g., --size) should be added to control the amount of padding added after the sequence number.
-2.  **M-2 - Warm-up Cycles:** To avoid 'cold start' noise (ARP, cache misses), the Master should perform a configurable number of non-recorded warm-up cycles (e.g., default 10).
-3.  **M-3 - Signal Handling (Partial Data Preservation):** If the user stops the Master with Ctrl+C, the binary should gracefully exit the loop and write the *currently collected* buffer to the CSV before terminating.
-4.  **M-4 - Buffer Overflow Protection:** The binary should check available system memory against the requested cycle count * sample size before allocation to prevent OOM crashes.
-5.  **M-5 - CPU Affinity (Real-Time):** For higher precision on the Raspberry Pi, an optional argument to pin the measurement thread to a specific CPU core (e.g., --cpu-pin 3) would reduce scheduling jitter.
-
-## Observations
-
-1.  **Consistency Error (TESTING.md vs REQUIREMENTS.md):** TESTING.md (IT-5) suggests only successful samples are in the CSV, but for jitter analysis, knowing where gaps (lost packets) occurred is vital. I recommend the CSV always has cycle count rows.
-2.  **Jitter Definition:** While 'Jitter' is in the project title, no specific formula is requested. I recommend implementing the **Standard Deviation of RTT** and **Peak-to-Peak Jitter** in the Python analysis script.
-3.  **Clock Resolution:** While std::time::Instant is monotonic, its precision on various OS/Hardware combinations should be verified during the first run and logged.
