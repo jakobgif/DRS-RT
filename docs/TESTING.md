@@ -59,12 +59,12 @@ Normal operation. Establishes the baseline RTT distribution.
 **Pass criteria:** 50,000 rows in CSV, no crashes, log file written.
 
 ### T-2 — High CPU load (50,000 cycles)
-The CPU load script (F-18) runs in the background during measurement. Used to observe scheduling jitter.
+The CPU load script (TF-1) runs in the background during measurement. Used to observe scheduling jitter.
 
 **Pass criteria:** 50,000 rows in CSV, histogram shows wider distribution than T-1.
 
 ### T-3 — High network load (50,000 cycles)
-A second instance of the binary runs on a different port concurrently (F-19). Used to observe network contention jitter.
+A second instance of the binary runs on a different port concurrently (TF-2). Used to observe network contention jitter.
 
 **Pass criteria:** 50,000 rows in CSV, histogram shows wider distribution than T-1.
 

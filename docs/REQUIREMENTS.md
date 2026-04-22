@@ -42,16 +42,25 @@ The Master shall record the round-trip time (RTT) for each cycle with sufficient
 All RTT samples shall be buffered in memory during the measurement loop. No file I/O or console output shall occur inside the loop. **Data logging must have zero impact on the RTT measurement** — writing to disk or any output stream is strictly deferred until all cycles are complete.
 
 #### F-11 — Receive timeout
-The Master shall implement a **receive timeout** to detect lost UDP packets.
+The Master shall implement a configurable receive timeout (`--timeout <seconds>`, default **5 s**) to detect lost UDP packets.
 
 #### F-12 — Graceful packet loss handling
-On timeout (packet loss), the Master shall log the lost cycle and continue to the next cycle without blocking.
+On timeout (packet loss), the Master shall record the lost cycle in an in-memory buffer and continue to the next cycle without blocking. Lost-packet events shall be flushed to the log file only after all cycles complete, consistent with F-10 and NF-5.
 
 #### F-13 — Log file output
 All log output (errors, lost packets, status messages) shall be written to a **log file**. Logs shall not be printed to the console during the measurement loop to avoid the probe effect.
 
 #### F-14 — CSV output
 After all cycles complete, the Master shall write all samples to a **CSV file** with one RTT value per row.
+
+#### F-15 — Sequence number payload
+Every UDP packet sent by the Master shall carry a **`u64` sequence number** as its payload. The Echo node reflects the packet back byte-for-byte, preserving the sequence number.
+
+#### F-16 — Stale and reordered packet handling
+On receive, the Master shall verify that the sequence number in the reply matches the sequence number of the most recently sent packet. Replies with a mismatched sequence number (stale or reordered) shall be discarded and the cycle shall be treated as lost (same handling as a timeout).
+
+#### F-17 — Relative timestamp in CSV
+Each row in the CSV file shall include a **relative timestamp** (microseconds elapsed since the start of the measurement loop) alongside the RTT value. This enables time-series analysis and correlation of RTT spikes with system events.
 
 ### Non-Functional Requirements
 
@@ -81,18 +90,18 @@ The Python script is responsible for all post-measurement analysis and visualiza
 
 ### Functional Requirements
 
-#### F-15 — CSV file path via CLI argument
+#### PF-1 — CSV file path via CLI argument
 The script shall accept the path to the CSV file as a command-line argument (e.g., `python analyze.py results.csv`).
 
-#### F-16 — RTT statistics
+#### PF-2 — RTT statistics
 The script shall compute the **minimum**, **mean**, and **maximum** RTT from the CSV data.
 
-#### F-17 — Histogram visualization
+#### PF-3 — Histogram visualization
 The script shall generate histograms from the CSV data. The Y-axis shall use a **logarithmic scale** to reveal the WCET tail. The longest delays shall never be cut off.
 
 ### Non-Functional Requirements
 
-#### NF-7 — Full sample preservation
+#### PNF-1 — Full sample preservation
 All samples shall be included in the analysis, including outliers and worst-case values — no truncation.
 
 ---
@@ -103,10 +112,10 @@ Supporting scripts used to create controlled load conditions for the test scenar
 
 ### Functional Requirements
 
-#### F-18 — CPU load script
+#### TF-1 — CPU load script
 A bash script shall be provided that saturates all available CPU cores with busy-loop workers. It shall run in the background and be stoppable via Ctrl+C or by killing the process group.
 
-#### F-19 — Network load scenario
+#### TF-2 — Network load scenario
 The high network load scenario (T-3) shall be achieved by running a second instance of the Rust binary on a different port. No additional script is required.
 
 ---
@@ -129,40 +138,7 @@ Normal operation over an extended run. Used to capture rare worst-case tail late
 
 ---
 
-## Open Questions
-
-### Q-1 — Packet loss timeout value
-What is the timeout duration for declaring a packet lost? (e.g., 100 ms, 1 s)
-
-### Q-2 — Packet payload
-What is the packet payload? Options: fixed-size padding, embedded sequence number, embedded timestamp.
-
-### Q-3 — Sequence number verification
-Should the Master verify that the echoed packet matches the sent packet via a sequence number check?
-
-### Q-4 — CSV timestamp column
-Should the CSV include a wall-clock timestamp per sample in addition to the RTT value?
-
-### Q-5 — Inter-cycle pacing
-Is a fixed inter-cycle send interval required, or should the Master send the next packet immediately after receiving a reply (send-and-wait as fast as possible)? Note: a fixed interval would conflict with NF-3 (no artificial delays) and would require an explicit exception.
-
-### Q-6 — Packet loss logging inside the measurement loop
-F-12 requires lost packets to be logged, but F-10 and NF-5 prohibit any I/O inside the measurement loop. Should lost-packet events be buffered in memory during the loop and flushed to the log file only after all cycles complete — consistent with how RTT samples are handled?
-
-### Q-7 — Packet payload and sequence verification
-Q-2 and Q-3 are coupled: if the payload is fixed-size padding only, sequence number verification (Q-3) is not possible. If a sequence number is embedded in the payload, stale or reordered echo replies can be detected. Which approach is required?
-
----
-
 # AI ASSISTANT ANALYSIS & PROPOSED UPDATES
-
-## Answers to Open Questions
-
-*   **Q-1 (Packet loss timeout):** **Recommendation:** Make this a configurable CLI argument (--timeout) with a default of **100ms** for real-time responsiveness.
-*   **Q-2 & Q-3 & Q-7 (Payload & Verification):** **Recommendation:** Use a **u64 sequence number** embedded in the payload. This is essential for detecting stale packets and correctly marking lost packets.
-*   **Q-4 (CSV timestamp):** **Recommendation:** Yes. Include a **relative timestamp** (microseconds since start) for each sample. This allows for time-series analysis and correlation with system events (CPU spikes, etc.).
-*   **Q-5 (Inter-cycle pacing):** **Recommendation:** Default to 'as fast as possible' to find system limits, but consider a --delay argument for controlled testing.
-*   **Q-6 (Packet loss logging):** **Recommendation:** Record lost packets in the in-memory buffer using a sentinel value (e.g., -1 or 0). These should be written to the CSV as 'LOST' or a specific value so the timeline remains consistent.
 
 ## Potential Missing Requirements
 
