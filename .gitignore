@@ -3,3 +3,6 @@
 .claude/settings.local.json
 
 docs/report/**/*.pdf
+
+check_token_usage.bat
+Briefing_ DRS Round-Trip Measurement.pdf
