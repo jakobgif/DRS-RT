@@ -45,13 +45,13 @@ All RTT samples shall be buffered in memory during the measurement loop. No file
 The Master shall implement a configurable receive timeout (`--timeout <seconds>`, default **5 s**) to detect lost UDP packets.
 
 #### F-12 — Graceful packet loss handling
-On timeout (packet loss), the Master shall record the lost cycle in an in-memory buffer and continue to the next cycle without blocking. Lost-packet events shall be flushed to the log file only after all cycles complete, consistent with F-10 and NF-5.
+On timeout (packet loss), the Master shall record `-1` in the RTT buffer for that cycle and continue to the next cycle without blocking. Lost-packet events shall also be written to the log file after all cycles complete, consistent with F-10 and NF-5.
 
 #### F-13 — Log file output
 All log output (errors, lost packets, status messages) shall be written to a **log file**. Logs shall not be printed to the console during the measurement loop to avoid the probe effect.
 
 #### F-14 — CSV output
-After all cycles complete, the Master shall write all samples to a **CSV file** with one RTT value per row.
+After all cycles complete, the Master shall write exactly N rows to a **CSV file** — one per cycle. Each row contains three fields: relative timestamp, RTT value, and a status string. See F-17 for the full row format.
 
 #### F-15 — Sequence number payload
 Every UDP packet sent by the Master shall carry a **`u64` sequence number** as its payload. The Echo node reflects the packet back byte-for-byte, preserving the sequence number.
@@ -59,8 +59,8 @@ Every UDP packet sent by the Master shall carry a **`u64` sequence number** as i
 #### F-16 — Stale and reordered packet handling
 On receive, the Master shall verify that the sequence number in the reply matches the sequence number of the most recently sent packet. Replies with a mismatched sequence number (stale or reordered) shall be discarded and the cycle shall be treated as lost (same handling as a timeout).
 
-#### F-17 — Relative timestamp in CSV
-Each row in the CSV file shall include a **relative timestamp** (microseconds elapsed since the start of the measurement loop) alongside the RTT value. This enables time-series analysis and correlation of RTT spikes with system events.
+#### F-17 — CSV row format
+Each row in the CSV file shall contain three fields: `timestamp_us, rtt_us, status`. `timestamp_us` is the microseconds elapsed since the start of the measurement loop. `rtt_us` is the round-trip time in microseconds for successful cycles, or `-1` for lost cycles. `status` is one of `ok`, `timeout`, or `seq_mismatch`. This enables time-series analysis and distinguishes network loss from reordered-packet discards.
 
 #### F-18 — Warm-up cycles
 Before the measurement loop begins, the Master shall perform a configurable number of unrecorded send/receive cycles (`--warmup <count>`, default **10**). These cycles are not included in the RTT buffer or CSV output. Their purpose is to prime the ARP table and CPU caches to eliminate cold-start noise from the measurement.
