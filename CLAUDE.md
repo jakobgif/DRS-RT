@@ -34,7 +34,9 @@ Do not touch already-committed code unless the task requires it. No reformatting
 
 Never commit "current state" snapshots or plan markdown files. These exist as working files only and must not enter git history. Before every commit, review what is staged and exclude any planning or status documents.
 
-Always add Claude as co-author in every commit message:
+**Autonomous commits** (made during implementation without being asked): Claude is the sole author — do not add a co-author trailer.
+
+**User-requested commits** (user explicitly asks to commit): Add Claude as co-author:
 
 ```
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
