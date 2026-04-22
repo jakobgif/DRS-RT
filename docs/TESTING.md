@@ -15,13 +15,16 @@ All valid combinations of role, port, host, and cycle count shall parse without 
 The RTT sample buffer shall be allocated with the full configured capacity before the first send. The test shall verify capacity equals the configured cycle count and that no reallocation occurs during simulated sample insertion. Covers NF-4.
 
 ### UT-3 — CSV serialization
-The CSV writer shall produce one RTT value per row with no header line. The test shall verify row count, value round-trip fidelity, and correct line endings. Covers F-14.
+The CSV writer shall produce one row per cycle with no header line. Each row shall contain the relative timestamp (µs since start) and the RTT value. The test shall verify row count, column count, value round-trip fidelity, and correct line endings. Covers F-14, F-17.
 
 ### UT-4 — Timeout configuration
 The receive timeout applied to the socket shall equal the configured timeout value. The test shall verify this without opening a real socket. Covers F-11.
 
 ### UT-5 — Packet loss counter
 On a simulated timeout, the lost-packet counter shall increment by one and the RTT buffer shall not receive an entry. The test shall verify the counter and buffer size independently. Covers F-12.
+
+### UT-6 — Sequence number verification
+When the Master receives a reply whose sequence number does not match the most recently sent packet, the reply shall be discarded and the cycle treated as lost. The test shall simulate a mismatched reply and verify that the lost-packet counter increments and no RTT entry is recorded. Covers F-15, F-16.
 
 ---
 
@@ -42,7 +45,7 @@ After N cycles with an Echo running on localhost, the RTT buffer shall contain e
 When no Echo is present, the Master shall record a timeout for that cycle and proceed to the next cycle without hanging or crashing. Covers F-11, F-12.
 
 ### IT-5 — Post-loop CSV output
-After all cycles complete, the CSV file shall exist and contain exactly as many rows as there are successful (non-lost) samples. Covers F-14.
+After all cycles complete, the CSV file shall exist and contain exactly N rows — one per cycle — regardless of whether the cycle succeeded or timed out. Lost cycles shall be represented by a sentinel value. Covers F-12, F-14.
 
 ### IT-6 — No I/O inside the loop
 The measurement loop shall not open, write to, or flush any file or stream between the first send and the last receive. Verified structurally: all file handles are opened before and closed after the loop, with no I/O calls inside it. Covers F-10, NF-5.
