@@ -69,9 +69,7 @@ def plot(timestamps, rtts, statuses, out_path, csv_name):
 
     # ── Histogram (PF-3) ────────────────────────────────────────────────────────
     if ok_rtts.size > 0:
-        lo, hi = ok_rtts.min(), ok_rtts.max()
-        bins = np.arange(lo - 0.5, hi + 1.5, 1)          # 1 µs bins
-        ax_hist.hist(ok_rtts, bins=bins, color="steelblue", edgecolor="none")
+        ax_hist.hist(ok_rtts, bins="auto", color="steelblue", edgecolor="none")
         ax_hist.set_yscale("log")
         ax_hist.set_xlabel("RTT (µs)")
         ax_hist.set_ylabel("Count (log scale)")
