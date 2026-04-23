@@ -1,9 +1,6 @@
-mod echo;
-mod master;
-mod types;
-
 use clap::{Parser, Subcommand};
-use master::MasterConfig;
+use drs_rt::echo;
+use drs_rt::master::{self, MasterConfig};
 
 // F-2: single binary, runtime role selection via CLI subcommand
 #[derive(Parser)]
