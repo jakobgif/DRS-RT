@@ -17,6 +17,7 @@ impl Status {
 }
 
 // F-9, F-17: one sample per measurement cycle
+#[derive(Clone, Copy)]
 pub struct Sample {
     pub timestamp_us: u64,
     pub rtt_us: i64, // -1 for lost cycles

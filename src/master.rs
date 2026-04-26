@@ -1,6 +1,7 @@
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::net::UdpSocket;
 use std::time::{Duration, Instant};
+use socket2::{Socket, Domain, Type, Protocol};
 
 use crate::types::{Sample, Status};
 
@@ -23,21 +24,22 @@ pub fn run(cfg: MasterConfig) -> anyhow::Result<()> {
     }
 
     let peer_addr = format!("{}:{}", cfg.host, cfg.port);
-    let socket = UdpSocket::bind("0.0.0.0:0")?;
-    socket.connect(&peer_addr)?;
-    // F-11: configurable receive timeout
-    socket.set_read_timeout(Some(Duration::from_secs_f64(cfg.timeout_secs)))?;
+    
+    // Optimization: Use socket2 to set low-latency options
+    let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+    socket.bind(&"0.0.0.0:0".parse::<std::net::SocketAddr>()?.into())?;
+    socket.connect(&peer_addr.parse::<std::net::SocketAddr>()?.into())?;
+    
+    // Optimization: Use non-blocking mode for spin-waiting to avoid context switches
+    socket.set_nonblocking(true)?;
+    let socket: UdpSocket = socket.into();
 
-    // NF-4: pre-allocate full buffer before any measurement; exit on OOM
+    let timeout = Duration::from_secs_f64(cfg.timeout_secs);
+
+    // NF-4 & Optimization: Pre-fill full buffer before any measurement to eliminate
+    // bounds/capacity checks (Vec::push) inside the hot path.
     let cap = cfg.cycles as usize;
-    let mut samples: Vec<Sample> = Vec::new();
-    samples.try_reserve(cap).map_err(|_| {
-        anyhow::anyhow!(
-            "Insufficient memory to pre-allocate RTT buffer for {} cycles (~{} MB required)",
-            cfg.cycles,
-            cap * std::mem::size_of::<Sample>() / 1_048_576
-        )
-    })?;
+    let mut samples = vec![Sample { timestamp_us: 0, rtt_us: 0, status: Status::Ok }; cap];
 
     let mut seq: u64 = 0;
     let mut recv_buf = [0u8; 64];
@@ -48,7 +50,11 @@ pub fn run(cfg: MasterConfig) -> anyhow::Result<()> {
         let send_buf = seq.to_le_bytes();
         seq += 1;
         let _ = socket.send(&send_buf);
-        let _ = socket.recv(&mut recv_buf);
+        
+        let t_start = Instant::now();
+        while t_start.elapsed() < timeout {
+            if socket.recv(&mut recv_buf).is_ok() { break; }
+        }
     }
     log::info!("Warm-up complete. Starting {} measurement cycle(s).", cfg.cycles);
 
@@ -56,65 +62,74 @@ pub fn run(cfg: MasterConfig) -> anyhow::Result<()> {
     // NF-5, F-10: no log macros, no allocation, no file I/O inside this loop.
     let loop_start = Instant::now();
 
-    for _ in 0..cfg.cycles {
+    for i in 0..cap {
         let current_seq = seq;
-        let send_buf = seq.to_le_bytes(); // 8 bytes on stack — no heap allocation
+        let send_buf = seq.to_le_bytes(); // 8 bytes on stack
         seq += 1;
 
         // F-6, F-15: send packet carrying u64 sequence number
         let t_send = Instant::now(); // NF-2: timestamp at send
         if socket.send(&send_buf).is_err() {
             // NF-6: socket send error — record as lost, continue
-            samples.push(Sample {
+            samples[i] = Sample {
                 timestamp_us: t_send.duration_since(loop_start).as_micros() as u64,
                 rtt_us: -1,
                 status: Status::Timeout,
-            });
+            };
             continue;
         }
 
-        match socket.recv(&mut recv_buf) {
-            Ok(n) => {
-                let t_recv = Instant::now(); // NF-2: timestamp at receive
+        // Optimization: Spin-wait for the reply to avoid thread descheduling/context switches.
+        // Also handles F-16 by continuing to wait if a stale/mismatched packet is received,
+        // preventing a cascade of sequence mismatches.
+        let mut final_status;
+        let mut t_recv = Instant::now();
+        let mut saw_mismatch = false;
 
-                // F-16: verify reflected sequence number
-                let status = if n >= 8 {
-                    let reflected = u64::from_le_bytes(recv_buf[..8].try_into().unwrap());
-                    if reflected == current_seq {
-                        Status::Ok
-                    } else {
-                        Status::SeqMismatch
+        loop {
+            match socket.recv(&mut recv_buf) {
+                Ok(n) => {
+                    t_recv = Instant::now(); // NF-2: timestamp at receive
+                    if n >= 8 {
+                        let reflected = u64::from_le_bytes(recv_buf[..8].try_into().unwrap());
+                        if reflected == current_seq {
+                            final_status = Status::Ok;
+                            break;
+                        } else {
+                            // F-16: Stale/mismatched packet received. 
+                            // We ignore it and continue spinning for the correct sequence number.
+                            saw_mismatch = true;
+                            continue;
+                        }
                     }
-                } else {
-                    Status::SeqMismatch
-                };
-
-                // F-9, F-17: record RTT or -1 for lost/mismatched cycles
-                let rtt_us = match status {
-                    Status::Ok => t_recv.duration_since(t_send).as_micros() as i64,
-                    _ => -1,
-                };
-
-                samples.push(Sample {
-                    timestamp_us: t_send.duration_since(loop_start).as_micros() as u64,
-                    rtt_us,
-                    status,
-                });
-            }
-            Err(e) => {
-                // F-11, F-12, NF-6: timeout or socket error — record as lost, continue
-                let status = if is_timeout_error(&e) {
-                    Status::Timeout
-                } else {
-                    Status::Timeout // non-timeout socket errors treated as lost
-                };
-                samples.push(Sample {
-                    timestamp_us: t_send.duration_since(loop_start).as_micros() as u64,
-                    rtt_us: -1,
-                    status,
-                });
+                }
+                Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+                    // Optimization: Spin-wait until timeout
+                    if t_send.elapsed() >= timeout {
+                        final_status = if saw_mismatch { Status::SeqMismatch } else { Status::Timeout };
+                        break;
+                    }
+                    std::hint::spin_loop();
+                }
+                Err(_) => {
+                    final_status = if saw_mismatch { Status::SeqMismatch } else { Status::Timeout };
+                    break;
+                }
             }
         }
+
+        // F-9, F-17: record RTT or -1 for lost cycles
+        let rtt_us = match final_status {
+            Status::Ok => t_recv.duration_since(t_send).as_micros() as i64,
+            _ => -1,
+        };
+
+        // Optimization: Direct indexing into pre-filled buffer (no capacity check)
+        samples[i] = Sample {
+            timestamp_us: t_send.duration_since(loop_start).as_micros() as u64,
+            rtt_us,
+            status: final_status,
+        };
     }
     // ── End hot path ───────────────────────────────────────────────────────────
 
@@ -165,13 +180,6 @@ fn write_csv(path: &str, samples: &[Sample]) -> anyhow::Result<()> {
         writeln!(w, "{},{},{}", s.timestamp_us, s.rtt_us, s.status.as_str())?;
     }
     Ok(())
-}
-
-fn is_timeout_error(e: &std::io::Error) -> bool {
-    matches!(
-        e.kind(),
-        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
-    )
 }
 
 // F-19: CPU affinity — Linux only
