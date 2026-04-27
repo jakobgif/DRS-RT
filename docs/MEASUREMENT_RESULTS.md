@@ -20,8 +20,8 @@ This document records the results of the Round-Trip Time (RTT) and jitter measur
     *   **Max RTT:** 6161 µs
     *   **p99:** 849.0 µs
 
-### 1.2. Scenario T-2: High CPU Load
-*   **Condition:** Raspberry Pi CPU saturated with busy-loop workers (`yes > /dev/null` on all 4 cores).
+### 1.2. Scenario T-2: CPU Load (Simple)
+*   **Condition:** Raspberry Pi CPU saturated with `yes > /dev/null`.
 *   **Cycles:** 50,000
 *   **Results:**
     *   **Min RTT:** 295 µs
@@ -29,20 +29,28 @@ This document records the results of the Round-Trip Time (RTT) and jitter measur
     *   **Max RTT:** 6031 µs
     *   **p99:** 799.0 µs
 
-### 1.3. Analysis of Setup A Results
+### 1.3. Scenario T-2: CPU Load (Aggressive Contention)
+*   **Condition:** Raspberry Pi running `aggressive_load.sh` (`stress-ng` targeting Cache, RAM, and Matrix math).
+*   **Cycles:** 50,000
+*   **Results:**
+    *   **Min RTT:** 154 µs
+    *   **Mean RTT:** 291.3 µs
+    *   **Max RTT:** 8130 µs
+    *   **p99:** 553.0 µs
 
-**Observation:**
-Counterintuitively, the High CPU Load scenario (T-2) resulted in **lower** minimum, mean, and p99 RTT values compared to the Baseline (T-1). The maximum RTT remained roughly the same (~6 ms).
+### 1.4. Analysis of Setup A Results
 
-**Reasoning:**
-This phenomenon is a classic example of **CPU Frequency Scaling and Power Management** interactions in general-purpose operating systems like Linux on ARM.
+**The "Hot CPU" Paradox:**
+In both load scenarios, the **average** performance improved significantly over the idle baseline. This is because the background load prevents the Pi from entering power-saving idle states. At 100% load, the CPU clock is locked at its maximum (1.5GHz+), eliminating the "wake-up" latency for network interrupts.
 
-1.  **Baseline (Power Saving):** When the Raspberry Pi is idle (T-1), the Linux `cpufreq` governor scales down the CPU clock speed (e.g., to 600 MHz) to conserve power and reduce thermals. When a network packet arrives, the interrupt wakes the CPU, but there is a latency cost associated with transitioning from a low-power state back to a high-performance state to process the packet and run the Echo logic.
-2.  **Load Test (Full Performance):** In Scenario T-2, the background `cpu_load.sh` script pegs all four cores at 100% utilization. This forces the `cpufreq` governor to keep the CPU locked at its maximum clock speed (e.g., 1.5 GHz or 1.8 GHz) constantly.
-3.  **The Result:** Because the CPU is already "awake" and running at maximum frequency during the load test, the hardware processes the incoming network interrupts and executes the Echo node reflection code significantly faster than in the baseline scenario. The latency penalty of waking up from an idle state is completely eliminated.
+**Simple vs. Aggressive Load:**
+1.  **Simple Load (`yes`):** This is a "clean" load. It uses almost no memory or cache. The CPU can pause it instantly to handle a packet with zero friction.
+2.  **Aggressive Load (`stress-ng`):** This load creates **Contention**. It thrashes the L1/L2 caches and saturates the memory bus. 
+    *   **The Result:** Even though the average is fast, the **Maximum RTT** spiked to **8.1ms**. 
+    *   **Reasoning:** When a network packet arrives, the CPU handles the interrupt, but the Echo node's code and data have been "evicted" from the cache by the stress script. The CPU must wait for slow RAM access to reload the Echo node's memory, leading to the high-latency spikes seen in the "tail" of the histogram.
 
 **Conclusion:**
-The Linux scheduler on the quad-core Pi 4 is efficient enough to preempt the low-priority user-space `yes` processes almost instantly to handle the incoming UDP packets. To observe true scheduling jitter (where load *increases* RTT), one must force core contention (e.g., by pinning both the load and the Echo node to the same specific core using `taskset`), which prevents the scheduler from utilizing idle resources.
+For real-time systems, "High CPU Usage" is often less dangerous than "High Memory/Cache Contention." Simple math loops might not affect RTT, but heavy data-processing tasks will introduce significant jitter by starving the measurement application of memory bandwidth.
 
 ---
 
