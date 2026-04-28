@@ -71,7 +71,7 @@
 
 #render(read("../REQUIREMENTS.md"))
 #render(read("../TESTING.md"))
-#render(read("../DEVELOPMENT.md"))
+#include "sections/40_results.typ"
 
 // -----------------------------------------------------------------------------
 // ---[ BIBLIOGRAPHY ]----------------------------------------------------------
