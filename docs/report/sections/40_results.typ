@@ -114,15 +114,15 @@ Across 500 000 cycles the system shows no drift, no packet loss, and a stable me
 
 #figure(
   table(
-    columns: (auto, auto, auto, auto, auto, auto, auto),
-    align: (left, right, right, right, right, right, right),
+    columns: (auto, auto, auto, auto, auto, auto, auto, auto),
+    align: (left, right, right, right, right, right, right, right),
     table.header(
-      [*Scenario*], [*Cycles*], [*Lost*], [*Mean (µs)*], [*p99 (µs)*], [*p99.9 (µs)*], [*Max (µs)*],
+      [*Scenario*], [*Cycles*], [*Lost*], [*Min (µs)*], [*Mean (µs)*], [*p99 (µs)*], [*p99.9 (µs)*], [*Max (µs)*],
     ),
-    [T-1 Baseline],      [50 000],  [0], [156.7], [201.0],   [426.0],   [3 004],
-    [T-2 CPU load],      [50 000],  [0], [157.3], [149.0],   [8 157.0], [11 729],
-    [T-3 Network load],  [50 000],  [0], [143.3], [168.0],   [650.0],   [5 302],
-    [T-4 Long-term],     [500 000], [0], [164.0], [180.0],   [221.0],   [3 424],
+    [T-1 Baseline],      [50 000],  [0], [130], [156.7], [201.0],   [426.0],   [3 004],
+    [T-2 CPU load],      [50 000],  [0], [105], [157.3], [149.0],   [8 157.0], [11 729],
+    [T-3 Network load],  [50 000],  [0], [108], [143.3], [168.0],   [650.0],   [5 302],
+    [T-4 Long-term],     [500 000], [0], [119], [164.0], [180.0],   [221.0],   [3 424],
   ),
   caption: [Comparison across all test scenarios],
 )
