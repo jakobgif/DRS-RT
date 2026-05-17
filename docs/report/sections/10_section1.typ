@@ -1,6 +1,6 @@
 = Project Overview
 
-This lab report documents the design, implementation, and measurement results of a UDP-based round-trip time (RTT) and latency jitter measurement system, built as part of the Distributed Embedded Systems course. The system targets two hardware nodes (Raspberry Pi 4) connected over a local network and is implemented in Rust.
+This lab report documents the design, implementation, and measurement results of a UDP-based round-trip time (RTT) and latency jitter measurement system, built as part of the Distributed Embedded Systems course. The system targets two hardware nodes (Raspberry Pi 4) connected over a local network and is implemented in Rust. The full source code is available at #link("https://github.com/jakobgif/DRS-RT")[github.com/jakobgif/DRS-RT].
 
 == Motivation
 
