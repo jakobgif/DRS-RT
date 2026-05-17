@@ -69,7 +69,7 @@ After a normal run completes, the log file shall exist and be non-empty. After a
 
 ## System Tests
 
-Run the compiled binary end-to-end on the target hardware (Raspberry Pi). Executed manually following the procedure in @DEVELOPMENT.md. The CI artifact is the authoritative binary for all system tests.
+Run the compiled binary end-to-end on the target hardware (Raspberry Pi).
 
 ### T-1 — Baseline (50,000 cycles)
 Normal operation. Establishes the baseline RTT distribution.
